@@ -72,7 +72,8 @@
   align-items: center;
   gap: clamp(14px, 2.5vw, 44px);
   width: 100%;
-  min-height: clamp(190px, 34vw, 470px);
+  height: clamp(240px, 38vw, 500px);
+  overflow: visible;
 }
 
 .for {
@@ -98,7 +99,7 @@
   width: 100%;
   color: var(--foreground);
   font-family: var(--font-display), serif;
-  font-size: clamp(2.5rem, 7vw, 6.5rem);
+  font-size: clamp(2.5rem, 7vw, 6rem);
   font-weight: 400;
   line-height: 0.93;
   overflow-wrap: anywhere;
@@ -148,13 +149,17 @@
   50% { opacity: 0.8; }
 }
 
-.error {
-  min-height: 1.2em;
+.caption {
+  height: 1.4em;
   margin-top: 25px;
   color: #d5cfc5;
   font-size: 11px;
   letter-spacing: 0.06em;
   text-align: center;
+}
+
+.error {
+  color: #d5cfc5;
 }
 
 .controls {
@@ -166,6 +171,7 @@
 }
 
 .primary {
+  width: min(100%, 280px);
   min-width: min(100%, 280px);
   min-height: 62px;
   padding: 0 27px;
@@ -192,8 +198,15 @@
 .actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: flex-start;
   justify-content: center;
   gap: 25px;
+  height: 24px;
+}
+
+.actionsHidden {
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .action {
@@ -214,12 +227,17 @@
 }
 
 .hint {
+  height: 1em;
   margin-top: 48px;
   color: #605d58;
   font-size: 9px;
   letter-spacing: 0.1em;
   text-align: center;
   text-transform: uppercase;
+}
+
+.hintHidden {
+  visibility: hidden;
 }
 
 @media (max-width: 600px) {
@@ -239,7 +257,7 @@
   .phrase {
     grid-template-columns: minmax(0, 1fr);
     gap: 15px;
-    min-height: 300px;
+    height: 360px;
   }
 
   .for {

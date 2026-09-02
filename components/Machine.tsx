@@ -272,21 +272,21 @@ export default function Machine({ sharedResult }: MachineProps) {
             <span className={styles.for}>for</span>
             <Reel label="audience" items={audienceItems} index={audienceWarming ? 0 : visibleAudienceIndex} moving={audienceMoving || audienceWarming} final={landed} response={response} revision={audienceWarming ? warmupTick : undefined} />
           </div>
-          {loading && <p className={`${styles.error} ${styles.loading}`}>consulting the void…</p>}
-          {!loading && errorMessage && <p className={styles.error} role="alert">{errorMessage}</p>}
+          <p className={styles.caption}>
+            {loading && <span className={styles.loading}>consulting the void…</span>}
+            {!loading && errorMessage && <span className={styles.error} role="alert">{errorMessage}</span>}
+          </p>
           <div className={styles.controls}>
             <button className={styles.primary} type="button" onClick={() => void spin()} disabled={busy}>
               {landed ? "Pull again" : "Generate a product"}
             </button>
-            {landed && (
-              <div className={styles.actions}>
-                <button className={styles.action} type="button" onClick={() => void spin()}>Spin again</button>
-                <button className={styles.action} type="button" onClick={() => void copy()}>{copied ? "Copied" : "Copy"}</button>
-                <button className={styles.action} type="button" onClick={() => void share()}>Share</button>
-              </div>
-            )}
+            <div className={`${styles.actions} ${!landed ? styles.actionsHidden : ""}`} aria-hidden={!landed}>
+              <button className={styles.action} type="button" onClick={() => void spin()} disabled={!landed} tabIndex={landed ? 0 : -1}>Spin again</button>
+              <button className={styles.action} type="button" onClick={() => void copy()} disabled={!landed} tabIndex={landed ? 0 : -1}>{copied ? "Copied" : "Copy"}</button>
+              <button className={styles.action} type="button" onClick={() => void share()} disabled={!landed} tabIndex={landed ? 0 : -1}>Share</button>
+            </div>
           </div>
-          {!landed && !busy && !errorMessage && <p className={styles.hint}>Space to pull</p>}
+          <p className={`${styles.hint} ${landed || busy || errorMessage ? styles.hintHidden : ""}`}>Space to pull</p>
         </section>
       </main>
     </div>
