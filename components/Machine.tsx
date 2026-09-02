@@ -225,7 +225,7 @@ export default function Machine({ sharedResult }: MachineProps) {
   async function share() {
     const url = `${window.location.origin}/?p=${encodeURIComponent(active?.finalProduct ?? "")}&a=${encodeURIComponent(active?.finalAudience ?? "")}`;
     if (navigator.share) {
-      await navigator.share({ title: "Lever", text: phrase, url });
+      await navigator.share({ title: "PULLTHELEVER.BUILD", text: phrase, url });
     } else {
       await navigator.clipboard.writeText(url);
       setCopied(true);
@@ -259,7 +259,7 @@ export default function Machine({ sharedResult }: MachineProps) {
     <div className={styles.page}>
       <div className={styles.grain} aria-hidden="true" />
       <header className={styles.header}>
-        <span className={styles.mark}>Lever</span>
+        <span className={styles.mark}>Pullthelever.build</span>
         <button className={styles.mute} type="button" onClick={toggleMute} aria-label={muted ? "Turn sound on" : "Turn sound off"}>
           {muted ? "Sound off" : "Sound on"}
         </button>

@@ -15,7 +15,7 @@ const ibmPlexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Lever — pull an idea from the void",
+  title: "PULLTHELEVER.BUILD",
   description: "A generative slot machine for software ideas.",
 };
 
