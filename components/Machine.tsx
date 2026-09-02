@@ -66,7 +66,9 @@ export default function Machine({ sharedResult }: MachineProps) {
   const [response, setResponse] = useState(false);
   const [muted, setMuted] = useState(false);
   const [warmupText, setWarmupText] = useState("___ ____ __");
+  const [warmupAudienceText, setWarmupAudienceText] = useState("___ ____ __");
   const [warmupTick, setWarmupTick] = useState(0);
+  const [warmupActive, setWarmupActive] = useState(false);
   const heldSpin = useRef<SpinResult | undefined>(undefined);
   const revealAbort = useRef<AbortController | undefined>(undefined);
   const warmupAbort = useRef<AbortController | undefined>(undefined);
@@ -124,6 +126,9 @@ export default function Machine({ sharedResult }: MachineProps) {
       if (controller.signal.aborted) return;
 
       setPhase("spinningAudience");
+      warmupAbort.current?.abort();
+      warmupAbort.current = undefined;
+      setWarmupActive(false);
       const audienceSteps = buildReelSchedule(spin.audiences.length, motionReduced);
       await runReel(
         audienceSteps,
@@ -161,21 +166,24 @@ export default function Machine({ sharedResult }: MachineProps) {
     const controller = new AbortController();
     warmupAbort.current?.abort();
     warmupAbort.current = controller;
+    setWarmupActive(warmupEnabled);
     setPhase(warmupEnabled ? "warming" : "loading");
     const warmupPromise = warmupEnabled
       ? runWarmup(() => {
           setWarmupText(makeWarmupGlyphs());
+          setWarmupAudienceText(makeWarmupGlyphs());
           setWarmupTick((tick) => tick + 1);
           audio.tick(0.2);
         }, controller.signal)
       : Promise.resolve();
     try {
       const result = await fetchSpin(history);
-      controller.abort();
-      await warmupPromise;
       await startReveal(result);
+      await warmupPromise;
     } catch (error) {
       controller.abort();
+      await warmupPromise;
+      setWarmupActive(false);
       const message = error instanceof Error ? error.message : "";
       if (typeof navigator !== "undefined" && !navigator.onLine) setErrorKind("offline");
       else if (message === "rate_limited") setErrorKind("rate");
@@ -227,9 +235,14 @@ export default function Machine({ sharedResult }: MachineProps) {
 
   const productItems = phase === "warming" ? [warmupText] : active?.products ?? ["_____"];
   const landed = phase === "landed";
+  const audienceWarming = warmupActive;
   const audienceVisible = phase === "spinningAudience" || landed;
-  const audienceItems = audienceVisible ? active?.audiences ?? ["_____"] : ["_____"];
-  const visibleAudienceIndex = audienceVisible ? audienceIndex : 0;
+  const audienceItems = audienceWarming
+    ? [warmupAudienceText]
+    : audienceVisible
+      ? active?.audiences ?? ["_____"]
+      : ["_____"];
+  const visibleAudienceIndex = audienceWarming || audienceVisible ? audienceIndex : 0;
   const loading = phase === "loading" || phase === "warming";
   const productMoving = phase === "spinningProduct";
   const audienceMoving = phase === "spinningAudience";
@@ -257,7 +270,7 @@ export default function Machine({ sharedResult }: MachineProps) {
           <div className={styles.phrase}>
             <Reel label="product" items={productItems} index={phase === "warming" ? 0 : productIndex} moving={productMoving || phase === "warming"} final={phase === "pause" || phase === "spinningAudience" || landed} revision={phase === "warming" ? warmupTick : undefined} />
             <span className={styles.for}>for</span>
-            <Reel label="audience" items={audienceItems} index={visibleAudienceIndex} moving={audienceMoving} final={landed} response={response} />
+            <Reel label="audience" items={audienceItems} index={audienceWarming ? 0 : visibleAudienceIndex} moving={audienceMoving || audienceWarming} final={landed} response={response} revision={audienceWarming ? warmupTick : undefined} />
           </div>
           {loading && <p className={`${styles.error} ${styles.loading}`}>consulting the void…</p>}
           {!loading && errorMessage && <p className={styles.error} role="alert">{errorMessage}</p>}
