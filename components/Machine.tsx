@@ -3,13 +3,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Reel from "./Reel";
 import { audio } from "@/lib/audio/engine";
-import { buildReelSchedule, runReel, type ReelStep } from "@/lib/animation/reel";
+import { buildReelSchedule, runReel, runWarmup, type ReelStep } from "@/lib/animation/reel";
 import type { SpinResult } from "@/lib/generation/schema";
 import styles from "@/app/page.module.css";
 
 type SharedResult = { product: string; audience: string };
 type MachineProps = { sharedResult?: SharedResult };
-type Phase = "idle" | "loading" | "spinningProduct" | "pause" | "spinningAudience" | "landed" | "error";
+type Phase = "idle" | "loading" | "warming" | "spinningProduct" | "pause" | "spinningAudience" | "landed" | "error";
 type ErrorKind = "rate" | "offline" | "generation";
 const HISTORY_KEY = "lever:history";
 
@@ -65,11 +65,15 @@ export default function Machine({ sharedResult }: MachineProps) {
   const [copied, setCopied] = useState(false);
   const [response, setResponse] = useState(false);
   const [muted, setMuted] = useState(false);
+  const [warmupText, setWarmupText] = useState("___ ____ __");
+  const [warmupTick, setWarmupTick] = useState(0);
   const heldSpin = useRef<SpinResult | undefined>(undefined);
   const revealAbort = useRef<AbortController | undefined>(undefined);
+  const warmupAbort = useRef<AbortController | undefined>(undefined);
+  const prefetchStarted = useRef(false);
 
   const phrase = active ? `${active.finalProduct} for ${active.finalAudience}` : "";
-  const busy = phase === "loading" || phase === "spinningProduct" || phase === "pause" || phase === "spinningAudience";
+  const busy = phase === "loading" || phase === "warming" || phase === "spinningProduct" || phase === "pause" || phase === "spinningAudience";
 
   useEffect(() => {
     const timeout = window.setTimeout(() => setMuted(audio.isMuted()), 0);
@@ -83,6 +87,12 @@ export default function Machine({ sharedResult }: MachineProps) {
       // Prefetch is opportunistic; the next explicit pull can retry.
     }
   }, []);
+
+  useEffect(() => {
+    if (prefetchStarted.current) return;
+    prefetchStarted.current = true;
+    void prefetch(readHistory());
+  }, [prefetch]);
 
   const startReveal = useCallback(
     async (spin: SpinResult) => {
@@ -147,11 +157,25 @@ export default function Machine({ sharedResult }: MachineProps) {
     }
 
     setErrorKind(undefined);
-    setPhase("loading");
+    const warmupEnabled = !reducedMotion();
+    const controller = new AbortController();
+    warmupAbort.current?.abort();
+    warmupAbort.current = controller;
+    setPhase(warmupEnabled ? "warming" : "loading");
+    const warmupPromise = warmupEnabled
+      ? runWarmup(() => {
+          setWarmupText(makeWarmupGlyphs());
+          setWarmupTick((tick) => tick + 1);
+          audio.tick(0.2);
+        }, controller.signal)
+      : Promise.resolve();
     try {
       const result = await fetchSpin(history);
+      controller.abort();
+      await warmupPromise;
       await startReveal(result);
     } catch (error) {
+      controller.abort();
       const message = error instanceof Error ? error.message : "";
       if (typeof navigator !== "undefined" && !navigator.onLine) setErrorKind("offline");
       else if (message === "rate_limited") setErrorKind("rate");
@@ -201,12 +225,12 @@ export default function Machine({ sharedResult }: MachineProps) {
     }
   }
 
-  const productItems = active?.products ?? ["_____"];
+  const productItems = phase === "warming" ? [warmupText] : active?.products ?? ["_____"];
   const landed = phase === "landed";
   const audienceVisible = phase === "spinningAudience" || landed;
   const audienceItems = audienceVisible ? active?.audiences ?? ["_____"] : ["_____"];
   const visibleAudienceIndex = audienceVisible ? audienceIndex : 0;
-  const loading = phase === "loading";
+  const loading = phase === "loading" || phase === "warming";
   const productMoving = phase === "spinningProduct";
   const audienceMoving = phase === "spinningAudience";
   const errorMessage =
@@ -231,7 +255,7 @@ export default function Machine({ sharedResult }: MachineProps) {
         <p className={styles.eyebrow}>A small pull on the universe</p>
         <section className={styles.machine} aria-label="Generative software idea machine">
           <div className={styles.phrase}>
-            <Reel label="product" items={productItems} index={productIndex} moving={productMoving} final={phase === "pause" || phase === "spinningAudience" || landed} />
+            <Reel label="product" items={productItems} index={phase === "warming" ? 0 : productIndex} moving={productMoving || phase === "warming"} final={phase === "pause" || phase === "spinningAudience" || landed} revision={phase === "warming" ? warmupTick : undefined} />
             <span className={styles.for}>for</span>
             <Reel label="audience" items={audienceItems} index={visibleAudienceIndex} moving={audienceMoving} final={landed} response={response} />
           </div>
@@ -258,4 +282,13 @@ export default function Machine({ sharedResult }: MachineProps) {
 
 function phraseFor(spin: SpinResult) {
   return `${spin.finalProduct} for ${spin.finalAudience}`;
+}
+
+function makeWarmupGlyphs() {
+  const glyphs = "▁▂▃─═░▒_—";
+  const words = 3 + Math.floor(Math.random() * 3);
+  return Array.from({ length: words }, () => {
+    const length = 1 + Math.floor(Math.random() * 5);
+    return Array.from({ length }, () => glyphs[Math.floor(Math.random() * glyphs.length)]).join("");
+  }).join(" ");
 }

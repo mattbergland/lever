@@ -140,7 +140,7 @@
 
 .loading {
   color: var(--muted);
-  animation: breathe 2.4s ease-in-out infinite;
+  animation: breathe 1.6s ease-in-out infinite;
 }
 
 @keyframes breathe {

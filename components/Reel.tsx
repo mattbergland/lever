@@ -9,6 +9,7 @@ type ReelProps = {
   moving: boolean;
   final: boolean;
   response?: boolean;
+  revision?: string | number;
 };
 
 export default function Reel({
@@ -18,6 +19,7 @@ export default function Reel({
   moving,
   final,
   response = false,
+  revision,
 }: ReelProps) {
   const text = items[index] ?? "";
   const className = [
@@ -31,7 +33,7 @@ export default function Reel({
 
   return (
     <div className={styles.reel} data-reel={label} data-state={moving ? "moving" : final ? "locked" : "idle"}>
-      <span key={`${label}-${index}`} className={className} aria-live={final && !moving ? "polite" : undefined}>
+      <span key={`${label}-${index}-${revision ?? ""}`} className={className} aria-live={final && !moving ? "polite" : undefined}>
         {text}
       </span>
     </div>

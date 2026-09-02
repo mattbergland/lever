@@ -1,4 +1,4 @@
-export type ReelPhase = "spin" | "anticipate" | "overshoot" | "recoil" | "lock";
+export type ReelPhase = "spin" | "lock";
 
 export type ReelStep = {
   index: number;
@@ -21,21 +21,24 @@ export function buildReelSchedule(count: number, reducedMotion: boolean): ReelSt
 
   const decoySteps = 34;
   const steps: ReelStep[] = [];
+  let previousDecoy = -1;
   for (let i = 0; i < decoySteps; i += 1) {
     const progress = i / Math.max(1, decoySteps - 1);
     const cycle = Math.floor(i / finalIndex);
     const offset = (cycle * 5) % finalIndex;
     const delayMs = Math.round(40 + 380 * progress ** 2.6);
+    let index = (i + offset) % finalIndex;
+    if (index === previousDecoy && finalIndex > 1) {
+      index = (index + 1) % finalIndex;
+    }
     steps.push({
-      index: (i + offset) % finalIndex,
+      index: i === decoySteps - 1 ? finalIndex : index,
       delayMs,
       phase: "spin",
     });
+    if (i < decoySteps - 1) previousDecoy = index;
   }
 
-  steps.push({ index: finalIndex - 1, delayMs: 500, phase: "anticipate" });
-  steps.push({ index: 0, delayMs: 130, phase: "overshoot" });
-  steps.push({ index: finalIndex, delayMs: 105, phase: "recoil" });
   steps.push({ index: finalIndex, delayMs: 0, phase: "lock" });
   return steps;
 }
@@ -75,6 +78,37 @@ export function runReel(
           return;
         }
         nextDelay = steps[stepNumber].delayMs;
+      }
+      requestAnimationFrame(frame);
+    };
+
+    requestAnimationFrame(frame);
+  });
+}
+
+export function runWarmup(
+  onTick: () => void,
+  signal?: AbortSignal,
+): Promise<void> {
+  return new Promise((resolve) => {
+    if (signal?.aborted) {
+      resolve();
+      return;
+    }
+
+    let previousTime: number | undefined;
+    let elapsed = 0;
+    const frame = (timestamp: number) => {
+      if (signal?.aborted) {
+        resolve();
+        return;
+      }
+      if (previousTime === undefined) previousTime = timestamp;
+      elapsed += timestamp - previousTime;
+      previousTime = timestamp;
+      if (elapsed >= 70) {
+        onTick();
+        elapsed = 0;
       }
       requestAnimationFrame(frame);
     };
