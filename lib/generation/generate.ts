@@ -45,31 +45,13 @@ export async function generateSpin(exclusions: string[] = []): Promise<SpinResul
   let lastError: unknown;
   for (let attempt = 0; attempt < 2; attempt += 1) {
     try {
-      const request = {
-        model: "claude-sonnet-4-20250514",
+      const response = await anthropic.messages.create({
+        model: process.env.ANTHROPIC_MODEL ?? "claude-sonnet-4-5-20250929",
         max_tokens: 1500,
         temperature: 1,
         system: prompt.system,
         messages: [{ role: "user" as const, content: prompt.user }],
-      };
-      let response: Anthropic.Messages.Message;
-      try {
-        response = await anthropic.messages.create(request);
-      } catch (error) {
-        if (
-          typeof error === "object" &&
-          error !== null &&
-          "status" in error &&
-          (error as { status?: number }).status === 404
-        ) {
-          response = await anthropic.messages.create({
-            ...request,
-            model: "claude-sonnet-4-5-20250929",
-          });
-        } else {
-          throw error;
-        }
-      }
+      });
       try {
         return normalizeSpinResult(JSON.parse(responseText(response)));
       } catch (error) {
