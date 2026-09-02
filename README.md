@@ -7,7 +7,7 @@ Lever is a generative slot machine for software ideas: **[PRODUCT] for [NICHE AU
 ```bash
 npm i
 cp .env.example .env.local
-# Add your OpenAI API key to .env.local (optional OPENAI_MODEL=gpt-5.6-sol)
+# Add your OpenAI API key to .env.local (optional OPENAI_MODEL=gpt-5.6-luna)
 npm run dev
 ```
 
