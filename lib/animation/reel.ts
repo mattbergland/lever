@@ -19,20 +19,22 @@ export function buildReelSchedule(count: number, reducedMotion: boolean): ReelSt
     ];
   }
 
-  const decoySteps = Math.max(15, Math.min(20, count + 4));
+  const decoySteps = 34;
   const steps: ReelStep[] = [];
   for (let i = 0; i < decoySteps; i += 1) {
     const progress = i / Math.max(1, decoySteps - 1);
-    const delayMs = Math.round(45 + 305 * progress ** 3);
+    const cycle = Math.floor(i / finalIndex);
+    const offset = (cycle * 5) % finalIndex;
+    const delayMs = Math.round(40 + 380 * progress ** 2.6);
     steps.push({
-      index: i % finalIndex,
+      index: (i + offset) % finalIndex,
       delayMs,
       phase: "spin",
     });
   }
 
   steps.push({ index: finalIndex - 1, delayMs: 500, phase: "anticipate" });
-  steps.push({ index: finalIndex, delayMs: 120, phase: "overshoot" });
+  steps.push({ index: 0, delayMs: 130, phase: "overshoot" });
   steps.push({ index: finalIndex, delayMs: 105, phase: "recoil" });
   steps.push({ index: finalIndex, delayMs: 0, phase: "lock" });
   return steps;

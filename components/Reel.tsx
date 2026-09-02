@@ -31,7 +31,7 @@ export default function Reel({
 
   return (
     <div className={styles.reel} data-reel={label} data-state={moving ? "moving" : final ? "locked" : "idle"}>
-      <span className={className} aria-live={final && !moving ? "polite" : undefined}>
+      <span key={`${label}-${index}`} className={className} aria-live={final && !moving ? "polite" : undefined}>
         {text}
       </span>
     </div>

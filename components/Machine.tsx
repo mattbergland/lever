@@ -202,9 +202,11 @@ export default function Machine({ sharedResult }: MachineProps) {
   }
 
   const productItems = active?.products ?? ["_____"];
-  const audienceItems = active?.audiences ?? ["_____"];
-  const loading = phase === "loading";
   const landed = phase === "landed";
+  const audienceVisible = phase === "spinningAudience" || landed;
+  const audienceItems = audienceVisible ? active?.audiences ?? ["_____"] : ["_____"];
+  const visibleAudienceIndex = audienceVisible ? audienceIndex : 0;
+  const loading = phase === "loading";
   const productMoving = phase === "spinningProduct";
   const audienceMoving = phase === "spinningAudience";
   const errorMessage =
@@ -231,7 +233,7 @@ export default function Machine({ sharedResult }: MachineProps) {
           <div className={styles.phrase}>
             <Reel label="product" items={productItems} index={productIndex} moving={productMoving} final={phase === "pause" || phase === "spinningAudience" || landed} />
             <span className={styles.for}>for</span>
-            <Reel label="audience" items={audienceItems} index={audienceIndex} moving={audienceMoving} final={landed} response={response} />
+            <Reel label="audience" items={audienceItems} index={visibleAudienceIndex} moving={audienceMoving} final={landed} response={response} />
           </div>
           {loading && <p className={`${styles.error} ${styles.loading}`}>consulting the void…</p>}
           {!loading && errorMessage && <p className={styles.error} role="alert">{errorMessage}</p>}
