@@ -43,7 +43,7 @@ export async function generateSpin(exclusions: string[] = []): Promise<SpinResul
   for (let attempt = 0; attempt < 2; attempt += 1) {
     try {
       const response = await openai.chat.completions.create({
-        model: process.env.OPENAI_MODEL ?? "gpt-5.6-sol",
+        model: process.env.OPENAI_MODEL ?? "gpt-5.6-luna",
         max_completion_tokens: 1500,
         response_format: { type: "json_object" },
         messages: [
