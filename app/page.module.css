@@ -19,7 +19,8 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: 25px clamp(20px, 4vw, 64px);
+  height: 64px;
+  padding: 0 clamp(20px, 4vw, 64px);
   font-size: 11px;
   letter-spacing: 0.13em;
   text-transform: uppercase;
@@ -46,15 +47,15 @@
 }
 
 .main {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  min-height: calc(100svh - 72px);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto auto auto;
+  height: calc(100svh - 64px);
+  min-height: 0;
   padding: 30px clamp(20px, 7vw, 112px) 58px;
 }
 
 .eyebrow {
-  margin-bottom: clamp(44px, 9vh, 100px);
+  margin-bottom: 32px;
   color: var(--muted);
   font-size: 11px;
   letter-spacing: 0.1em;
@@ -64,6 +65,7 @@
 .machine {
   width: min(100%, 1216px);
   margin: 0 auto;
+  display: contents;
 }
 
 .phrase {
@@ -71,8 +73,10 @@
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
   gap: clamp(14px, 2.5vw, 44px);
-  width: 100%;
-  height: clamp(240px, 38vw, 500px);
+  width: min(100%, 1216px);
+  height: 100%;
+  min-height: 0;
+  margin: 0 auto;
   overflow: visible;
 }
 
@@ -99,7 +103,7 @@
   width: 100%;
   color: var(--foreground);
   font-family: var(--font-display), serif;
-  font-size: clamp(2.5rem, 7vw, 6rem);
+  font-size: clamp(2.2rem, min(6.5vw, 9.5vh), 6rem);
   font-weight: 400;
   line-height: 0.93;
   overflow-wrap: anywhere;
@@ -150,6 +154,7 @@
 }
 
 .caption {
+  width: min(100%, 1216px);
   height: 1.4em;
   margin-top: 25px;
   color: #d5cfc5;
@@ -167,7 +172,8 @@
   flex-direction: column;
   align-items: center;
   gap: 27px;
-  margin-top: clamp(45px, 9vh, 100px);
+  width: min(100%, 1216px);
+  margin: 36px auto 0;
 }
 
 .primary {
@@ -227,8 +233,9 @@
 }
 
 .hint {
+  width: min(100%, 1216px);
   height: 1em;
-  margin-top: 48px;
+  margin: 48px auto 0;
   color: #605d58;
   font-size: 9px;
   letter-spacing: 0.1em;
@@ -242,16 +249,18 @@
 
 @media (max-width: 600px) {
   .header {
-    padding-top: 20px;
+    height: 60px;
   }
 
   .main {
+    height: auto;
     min-height: calc(100svh - 60px);
+    grid-template-rows: auto auto auto auto auto;
     padding-top: 15px;
   }
 
   .eyebrow {
-    margin-bottom: 50px;
+    margin-bottom: 32px;
   }
 
   .phrase {
@@ -273,7 +282,7 @@
   }
 
   .controls {
-    margin-top: 58px;
+    margin-top: 36px;
   }
 }
 
