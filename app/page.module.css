@@ -121,7 +121,7 @@
   to { opacity: 0.85; transform: translateY(0); }
 }
 
-.audienceLocked {
+.finalLocked {
   text-decoration: underline;
   text-decoration-color: var(--accent);
   text-decoration-thickness: 0.04em;

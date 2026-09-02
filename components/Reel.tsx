@@ -25,7 +25,7 @@ export default function Reel({
   const className = [
     styles.reelText,
     moving ? styles.moving : styles.locked,
-    final && !moving && label === "audience" ? styles.audienceLocked : "",
+    final && !moving ? styles.finalLocked : "",
     response ? styles.response : "",
   ]
     .filter(Boolean)
