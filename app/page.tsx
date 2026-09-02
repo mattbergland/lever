@@ -9,12 +9,16 @@ type HomeProps = {
 
 export default async function Home({ searchParams }: HomeProps) {
   const params = await searchParams;
+  const product = typeof params.p === "string" ? params.p.trim() : "";
+  const audience = typeof params.a === "string" ? params.a.trim() : "";
   const shared =
-    typeof params.p === "string" &&
-    typeof params.a === "string" &&
-    params.p.trim() &&
-    params.a.trim()
-      ? { product: params.p.trim(), audience: params.a.trim() }
+    product &&
+    audience &&
+    product.length <= 60 &&
+    audience.length <= 60 &&
+    !/[\r\n]/.test(product) &&
+    !/[\r\n]/.test(audience)
+      ? { product, audience }
       : undefined;
 
   return <Machine sharedResult={shared} />;

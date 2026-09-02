@@ -91,10 +91,10 @@ export default function Machine({ sharedResult }: MachineProps) {
   }, []);
 
   useEffect(() => {
-    if (prefetchStarted.current) return;
+    if (sharedResult || prefetchStarted.current) return;
     prefetchStarted.current = true;
     void prefetch(readHistory());
-  }, [prefetch]);
+  }, [prefetch, sharedResult]);
 
   const startReveal = useCallback(
     async (spin: SpinResult) => {
