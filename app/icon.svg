@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="14" fill="#0b0b0b"/>
+  <!-- base -->
+  <rect x="14" y="44" width="36" height="8" rx="3" fill="#f5f1ea"/>
+  <!-- slot on base -->
+  <rect x="24" y="46.5" width="16" height="3" rx="1.5" fill="#0b0b0b"/>
+  <!-- lever arm, pulled toward the right -->
+  <line x1="32" y1="46" x2="45" y2="18" stroke="#e8ff47" stroke-width="7" stroke-linecap="round"/>
+  <!-- pivot -->
+  <circle cx="32" cy="46" r="4.5" fill="#0b0b0b" stroke="#e8ff47" stroke-width="2.5"/>
+  <!-- knob -->
+  <circle cx="46" cy="15" r="9" fill="#e8ff47"/>
+  <circle cx="43.5" cy="12.5" r="2.2" fill="#0b0b0b" opacity="0.35"/>
+</svg>
