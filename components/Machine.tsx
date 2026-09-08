@@ -258,6 +258,7 @@ export default function Machine({ sharedResult }: MachineProps) {
   const loading = phase === "loading" || phase === "warming";
   const productMoving = phase === "spinningProduct";
   const audienceMoving = phase === "spinningAudience";
+  const devinUrl = landed && active ? `https://app.devin.ai/?prompt=${encodeURIComponent(buildDevinPrompt(active.finalProduct, active.finalAudience))}` : undefined;
   const errorMessage =
     errorKind === "rate"
       ? "The machine is catching its breath. Try again shortly."
@@ -289,9 +290,22 @@ export default function Machine({ sharedResult }: MachineProps) {
             {!loading && errorMessage && <span className={styles.error} role="alert">{errorMessage}</span>}
           </p>
           <div className={styles.controls}>
-            <button className={styles.primary} type="button" onClick={() => void spin()} disabled={busy}>
-              {landed ? "Pull again" : "Generate a product"}
-            </button>
+            <div className={styles.primaryRow}>
+              <button className={styles.primary} type="button" onClick={() => void spin()} disabled={busy}>
+                {landed ? "Pull again" : "Generate a product"}
+              </button>
+              <a
+                className={`${styles.build} ${!devinUrl ? styles.buildHidden : ""}`}
+                href={devinUrl ?? "https://app.devin.ai/"}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-hidden={!devinUrl}
+                tabIndex={devinUrl ? 0 : -1}
+                title="Open Devin in a new tab with the build prompt filled in"
+              >
+                Build with Devin
+              </a>
+            </div>
             <div className={`${styles.actions} ${!landed ? styles.actionsHidden : ""}`} aria-hidden={!landed}>
               <button className={styles.action} type="button" onClick={() => void spin()} disabled={!landed} tabIndex={landed ? 0 : -1}>Spin again</button>
               <button className={styles.action} type="button" onClick={() => void copy()} disabled={!landed} tabIndex={landed ? 0 : -1}>{copied ? "Copied" : "Copy"}</button>
