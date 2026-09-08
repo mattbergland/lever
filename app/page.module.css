@@ -176,9 +176,50 @@
   margin: 36px auto 0;
 }
 
+.primaryRow {
+  display: grid;
+  grid-template-columns: 1fr min(100%, 280px) 1fr;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+.primaryRow > :first-child {
+  grid-column: 2;
+}
+
+.build {
+  grid-column: 3;
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 62px;
+  padding: 0 22px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--background);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-decoration: none;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transition: background 160ms ease, color 160ms ease;
+}
+
+.build:hover {
+  background: transparent;
+  color: var(--accent);
+}
+
+.buildHidden {
+  visibility: hidden;
+  pointer-events: none;
+}
+
 .primary {
-  width: min(100%, 280px);
-  min-width: min(100%, 280px);
+  width: 100%;
   min-height: 62px;
   padding: 0 27px;
   border: 1px solid var(--foreground);
@@ -283,6 +324,23 @@
 
   .controls {
     margin-top: 36px;
+  }
+
+  .primaryRow {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    gap: 12px;
+  }
+
+  .primaryRow > :first-child,
+  .build {
+    grid-column: 1;
+    justify-self: center;
+    width: min(100%, 280px);
+  }
+
+  .build {
+    min-height: 48px;
   }
 }
 
