@@ -307,7 +307,6 @@ export default function Machine({ sharedResult }: MachineProps) {
               </a>
             </div>
             <div className={`${styles.actions} ${!landed ? styles.actionsHidden : ""}`} aria-hidden={!landed}>
-              <button className={styles.action} type="button" onClick={() => void spin()} disabled={!landed} tabIndex={landed ? 0 : -1}>Spin again</button>
               <button className={styles.action} type="button" onClick={() => void copy()} disabled={!landed} tabIndex={landed ? 0 : -1}>{copied ? "Copied" : "Copy"}</button>
               <button className={styles.action} type="button" onClick={() => void copyPrompt()} disabled={!landed} tabIndex={landed ? 0 : -1} title="Copy a ready-to-paste prompt asking Devin to build this idea">{promptCopied ? "Prompt copied" : "Devin prompt"}</button>
               <button className={styles.action} type="button" onClick={() => void share()} disabled={!landed} tabIndex={landed ? 0 : -1}>Share</button>
