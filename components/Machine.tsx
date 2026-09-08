@@ -6,6 +6,7 @@ import { audio } from "@/lib/audio/engine";
 import { buildReelSchedule, runReel, runWarmup, type ReelStep } from "@/lib/animation/reel";
 import type { SpinResult } from "@/lib/generation/schema";
 import styles from "@/app/page.module.css";
+import { buildDevinPrompt } from "@/lib/devinPrompt";
 
 type SharedResult = { product: string; audience: string };
 type MachineProps = { sharedResult?: SharedResult };
@@ -63,6 +64,7 @@ export default function Machine({ sharedResult }: MachineProps) {
   const [audienceIndex, setAudienceIndex] = useState(0);
   const [errorKind, setErrorKind] = useState<ErrorKind>();
   const [copied, setCopied] = useState(false);
+  const [promptCopied, setPromptCopied] = useState(false);
   const [response, setResponse] = useState(false);
   const [muted, setMuted] = useState(false);
   const [warmupText, setWarmupText] = useState("___ ____ __");
@@ -222,6 +224,16 @@ export default function Machine({ sharedResult }: MachineProps) {
     }
   }
 
+  async function copyPrompt() {
+    try {
+      await navigator.clipboard.writeText(buildDevinPrompt(active?.finalProduct ?? "", active?.finalAudience ?? ""));
+      setPromptCopied(true);
+      window.setTimeout(() => setPromptCopied(false), 1600);
+    } catch {
+      setPromptCopied(false);
+    }
+  }
+
   async function share() {
     const url = `${window.location.origin}/?p=${encodeURIComponent(active?.finalProduct ?? "")}&a=${encodeURIComponent(active?.finalAudience ?? "")}`;
     if (navigator.share) {
@@ -283,6 +295,7 @@ export default function Machine({ sharedResult }: MachineProps) {
             <div className={`${styles.actions} ${!landed ? styles.actionsHidden : ""}`} aria-hidden={!landed}>
               <button className={styles.action} type="button" onClick={() => void spin()} disabled={!landed} tabIndex={landed ? 0 : -1}>Spin again</button>
               <button className={styles.action} type="button" onClick={() => void copy()} disabled={!landed} tabIndex={landed ? 0 : -1}>{copied ? "Copied" : "Copy"}</button>
+              <button className={styles.action} type="button" onClick={() => void copyPrompt()} disabled={!landed} tabIndex={landed ? 0 : -1} title="Copy a ready-to-paste prompt asking Devin to build this idea">{promptCopied ? "Prompt copied" : "Devin prompt"}</button>
               <button className={styles.action} type="button" onClick={() => void share()} disabled={!landed} tabIndex={landed ? 0 : -1}>Share</button>
             </div>
           </div>
