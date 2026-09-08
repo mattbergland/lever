@@ -81,10 +81,10 @@
 }
 
 .for {
-  color: var(--muted);
+  color: #a9a49b;
   font-family: var(--font-mono), monospace;
-  font-size: clamp(10px, 1vw, 13px);
-  letter-spacing: 0.12em;
+  font-size: clamp(16px, 1.5vw, 22px);
+  letter-spacing: 0.16em;
   text-align: center;
   text-transform: uppercase;
 }
