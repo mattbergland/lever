@@ -1,13 +1,24 @@
+import type { BuildTarget } from "@/lib/devinPrompt";
+
 type PromptInput = {
   seed: string;
   weirdness: number;
   exclusions: string[];
+  target?: BuildTarget;
 };
+
+const PLATFORM_HINTS = {
+  web: "a web app used in a browser",
+  desktop: "a desktop app installed on a Mac or PC",
+  ios: "a native iPhone/iPad app (think camera, location, notifications, on-the-go use)",
+  android: "a native Android phone/tablet app (think camera, location, notifications, on-the-go use)",
+} as const;
 
 export function buildGenerationPrompt({
   seed,
   weirdness,
   exclusions,
+  target,
 }: PromptInput): { system: string; user: string } {
   const mode =
     weirdness < 20
@@ -35,7 +46,11 @@ GENERATION TASTE:
 - Some tension between product and audience is desirable. Do not make every pairing suspiciously perfect, but reject combinations that are meaningless or harmful.
 - Every entry must be a real, distinct candidate. Never use filler, numbering, or nonsense.
 
-This spin's creative mode is: ${mode}.`,
+This spin's creative mode is: ${mode}.${
+      target?.platform
+        ? `\nThe user intends to build the result as ${PLATFORM_HINTS[target.platform]}. Let that gently shape the products so they make sense in that form; do not name the platform in the text and do not let it flatten the variety.`
+        : ""
+    }`,
     user: `Spin seed: ${seed}
 Weirdness score: ${weirdness}
 Return ONLY valid JSON, with no markdown or commentary, in exactly this shape:

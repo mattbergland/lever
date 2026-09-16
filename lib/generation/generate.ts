@@ -2,6 +2,7 @@ import OpenAI from "openai";
 import crypto from "node:crypto";
 import { buildGenerationPrompt } from "./prompt";
 import { normalizeSpinResult, type SpinResult } from "./schema";
+import type { BuildTarget } from "@/lib/devinPrompt";
 
 export class RateLimitError extends Error {
   readonly code = "rate_limited";
@@ -26,7 +27,7 @@ function responseText(response: OpenAI.Chat.Completions.ChatCompletion): string 
     .trim();
 }
 
-export async function generateSpin(exclusions: string[] = []): Promise<SpinResult> {
+export async function generateSpin(exclusions: string[] = [], target: BuildTarget = {}): Promise<SpinResult> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
     throw new GenerationError("OPENAI_API_KEY is not configured");
@@ -37,6 +38,7 @@ export async function generateSpin(exclusions: string[] = []): Promise<SpinResul
     seed: crypto.randomUUID(),
     weirdness: crypto.randomInt(0, 101),
     exclusions: exclusions.slice(-40),
+    target,
   });
 
   let lastError: unknown;

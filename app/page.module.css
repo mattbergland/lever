@@ -212,7 +212,8 @@
 }
 
 .buildHidden {
-  display: none;
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .primary {
@@ -259,11 +260,6 @@
   justify-content: center;
   gap: 6px;
   height: 56px;
-}
-
-.targetsHidden {
-  visibility: hidden;
-  pointer-events: none;
 }
 
 .targetRow {

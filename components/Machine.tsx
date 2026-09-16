@@ -54,11 +54,15 @@ function readTarget(): BuildTarget {
   }
 }
 
-async function fetchSpin(exclusions: string[]): Promise<SpinResult> {
+async function fetchSpin(exclusions: string[], target: BuildTarget): Promise<SpinResult> {
   const response = await fetch("/api/spin", {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ exclusions: exclusions.slice(-40) }),
+    body: JSON.stringify({
+      exclusions: exclusions.slice(-40),
+      ...(target.platform ? { platform: target.platform } : {}),
+      ...(target.machine ? { machine: target.machine } : {}),
+    }),
   });
   let data: unknown;
   try {
@@ -133,17 +137,17 @@ export default function Machine({ sharedResult }: MachineProps) {
 
   const prefetch = useCallback(async (exclusions: string[]) => {
     try {
-      heldSpin.current = await fetchSpin(exclusions);
+      heldSpin.current = await fetchSpin(exclusions, target);
     } catch {
       // Prefetch is opportunistic; the next explicit pull can retry.
     }
-  }, []);
+  }, [target]);
 
   useEffect(() => {
-    if (sharedResult || prefetchStarted.current) return;
+    if (sharedResult || !targetLoaded || prefetchStarted.current) return;
     prefetchStarted.current = true;
     void prefetch(readHistory());
-  }, [prefetch, sharedResult]);
+  }, [prefetch, sharedResult, targetLoaded]);
 
   const startReveal = useCallback(
     async (spin: SpinResult) => {
@@ -226,7 +230,7 @@ export default function Machine({ sharedResult }: MachineProps) {
         }, controller.signal)
       : Promise.resolve();
     try {
-      const result = await fetchSpin(history);
+      const result = await fetchSpin(history, target);
       await startReveal(result);
       await warmupPromise;
     } catch (error) {
@@ -240,7 +244,7 @@ export default function Machine({ sharedResult }: MachineProps) {
       else setErrorKind("generation");
       setPhase("error");
     }
-  }, [busy, startReveal]);
+  }, [busy, startReveal, target]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -368,7 +372,7 @@ export default function Machine({ sharedResult }: MachineProps) {
               <button className={styles.action} type="button" onClick={() => void copyPrompt()} disabled={!landed} tabIndex={landed ? 0 : -1} title="Copy a ready-to-paste prompt asking Devin to build this idea">{promptCopied ? "Prompt copied" : "Devin prompt"}</button>
               <button className={styles.action} type="button" onClick={() => void share()} disabled={!landed} tabIndex={landed ? 0 : -1}>Share</button>
             </div>
-            <div className={`${styles.targets} ${!landed ? styles.targetsHidden : ""}`} aria-hidden={!landed}>
+            <div className={styles.targets}>
               <div className={styles.targetRow} role="group" aria-label="App type">
                 <span className={styles.targetLabel}>App</span>
                 {PLATFORMS.map((platform) => (
@@ -378,8 +382,8 @@ export default function Machine({ sharedResult }: MachineProps) {
                     type="button"
                     aria-pressed={target.platform === platform}
                     onClick={() => toggleTarget("platform", platform)}
-                    disabled={!landed}
-                    tabIndex={landed ? 0 : -1}
+                    disabled={busy}
+                    tabIndex={busy ? -1 : 0}
                   >
                     {PLATFORM_LABELS[platform]}
                   </button>
@@ -394,8 +398,8 @@ export default function Machine({ sharedResult }: MachineProps) {
                     type="button"
                     aria-pressed={target.machine === machine}
                     onClick={() => toggleTarget("machine", machine)}
-                    disabled={!landed}
-                    tabIndex={landed ? 0 : -1}
+                    disabled={busy}
+                    tabIndex={busy ? -1 : 0}
                   >
                     {MACHINE_LABELS[machine]}
                   </button>
