@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { generateSpin, GenerationError, RateLimitError } from "@/lib/generation/generate";
 import { checkRateLimit } from "@/lib/server/rateLimit";
+import { MACHINES, PLATFORMS } from "@/lib/devinPrompt";
+import { z } from "zod";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -49,6 +51,15 @@ export async function POST(request: Request) {
     // Treat an empty or malformed body as a spin without exclusions.
   }
 
+  const requestFields = z.object({
+    platform: z.enum(PLATFORMS).optional(),
+    machine: z.enum(MACHINES).optional(),
+  });
+  const parsedFields = requestFields.safeParse(body);
+  if (!parsedFields.success && body !== undefined && body !== null) {
+    return NextResponse.json({ error: "invalid_request" }, { status: 400 });
+  }
+
   const rawExclusions =
     body !== null &&
     typeof body === "object" &&
@@ -63,7 +74,7 @@ export async function POST(request: Request) {
     .slice(-40);
 
   try {
-    return NextResponse.json(await generateSpin(exclusions));
+    return NextResponse.json(await generateSpin(exclusions, parsedFields.success ? parsedFields.data : {}));
   } catch (error) {
     if (error instanceof RateLimitError) {
       return NextResponse.json({ error: "rate_limited" }, { status: 429 });

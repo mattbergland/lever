@@ -6,13 +6,23 @@ import { audio } from "@/lib/audio/engine";
 import { buildReelSchedule, runReel, runWarmup, type ReelStep } from "@/lib/animation/reel";
 import type { SpinResult } from "@/lib/generation/schema";
 import styles from "@/app/page.module.css";
-import { buildDevinPrompt } from "@/lib/devinPrompt";
+import {
+  buildDevinPrompt,
+  MACHINE_LABELS,
+  MACHINES,
+  PLATFORM_LABELS,
+  PLATFORMS,
+  type BuildTarget,
+  type Machine as DevinMachine,
+  type Platform,
+} from "@/lib/devinPrompt";
 
 type SharedResult = { product: string; audience: string };
 type MachineProps = { sharedResult?: SharedResult };
 type Phase = "idle" | "loading" | "warming" | "spinningProduct" | "pause" | "spinningAudience" | "landed" | "error";
 type ErrorKind = "rate" | "offline" | "generation";
 const HISTORY_KEY = "lever:history";
+const TARGET_KEY = "lever:target";
 
 function readHistory() {
   if (typeof window === "undefined") return [];
@@ -24,11 +34,35 @@ function readHistory() {
   }
 }
 
-async function fetchSpin(exclusions: string[]): Promise<SpinResult> {
+function readTarget(): BuildTarget {
+  if (typeof window === "undefined") return {};
+  try {
+    const parsed: unknown = JSON.parse(window.localStorage.getItem(TARGET_KEY) ?? "{}");
+    if (!parsed || typeof parsed !== "object") return {};
+    const candidate = parsed as { platform?: unknown; machine?: unknown };
+    const platform =
+      typeof candidate.platform === "string" && PLATFORMS.includes(candidate.platform as Platform)
+        ? (candidate.platform as Platform)
+        : undefined;
+    const machine =
+      typeof candidate.machine === "string" && MACHINES.includes(candidate.machine as DevinMachine)
+        ? (candidate.machine as DevinMachine)
+        : undefined;
+    return { platform, machine };
+  } catch {
+    return {};
+  }
+}
+
+async function fetchSpin(exclusions: string[], target: BuildTarget): Promise<SpinResult> {
   const response = await fetch("/api/spin", {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ exclusions: exclusions.slice(-40) }),
+    body: JSON.stringify({
+      exclusions: exclusions.slice(-40),
+      ...(target.platform ? { platform: target.platform } : {}),
+      ...(target.machine ? { machine: target.machine } : {}),
+    }),
   });
   let data: unknown;
   try {
@@ -67,6 +101,8 @@ export default function Machine({ sharedResult }: MachineProps) {
   const [promptCopied, setPromptCopied] = useState(false);
   const [response, setResponse] = useState(false);
   const [muted, setMuted] = useState(false);
+  const [target, setTarget] = useState<BuildTarget>({});
+  const [targetLoaded, setTargetLoaded] = useState(false);
   const [warmupText, setWarmupText] = useState("___ ____ __");
   const [warmupAudienceText, setWarmupAudienceText] = useState("___ ____ __");
   const [warmupTick, setWarmupTick] = useState(0);
@@ -75,6 +111,7 @@ export default function Machine({ sharedResult }: MachineProps) {
   const revealAbort = useRef<AbortController | undefined>(undefined);
   const warmupAbort = useRef<AbortController | undefined>(undefined);
   const prefetchStarted = useRef(false);
+  const targetRead = useRef(false);
 
   const phrase = active ? `${active.finalProduct} for ${active.finalAudience}` : "";
   const busy = phase === "loading" || phase === "warming" || phase === "spinningProduct" || phase === "pause" || phase === "spinningAudience";
@@ -84,19 +121,33 @@ export default function Machine({ sharedResult }: MachineProps) {
     return () => window.clearTimeout(timeout);
   }, []);
 
-  const prefetch = useCallback(async (exclusions: string[]) => {
-    try {
-      heldSpin.current = await fetchSpin(exclusions);
-    } catch {
-      // Prefetch is opportunistic; the next explicit pull can retry.
-    }
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setTarget(readTarget());
+      targetRead.current = true;
+      setTargetLoaded(true);
+    }, 0);
+    return () => window.clearTimeout(timeout);
   }, []);
 
   useEffect(() => {
-    if (sharedResult || prefetchStarted.current) return;
+    if (!targetRead.current || !targetLoaded) return;
+    window.localStorage.setItem(TARGET_KEY, JSON.stringify(target));
+  }, [target, targetLoaded]);
+
+  const prefetch = useCallback(async (exclusions: string[]) => {
+    try {
+      heldSpin.current = await fetchSpin(exclusions, target);
+    } catch {
+      // Prefetch is opportunistic; the next explicit pull can retry.
+    }
+  }, [target]);
+
+  useEffect(() => {
+    if (sharedResult || !targetLoaded || prefetchStarted.current) return;
     prefetchStarted.current = true;
     void prefetch(readHistory());
-  }, [prefetch, sharedResult]);
+  }, [prefetch, sharedResult, targetLoaded]);
 
   const startReveal = useCallback(
     async (spin: SpinResult) => {
@@ -179,7 +230,7 @@ export default function Machine({ sharedResult }: MachineProps) {
         }, controller.signal)
       : Promise.resolve();
     try {
-      const result = await fetchSpin(history);
+      const result = await fetchSpin(history, target);
       await startReveal(result);
       await warmupPromise;
     } catch (error) {
@@ -193,7 +244,7 @@ export default function Machine({ sharedResult }: MachineProps) {
       else setErrorKind("generation");
       setPhase("error");
     }
-  }, [busy, startReveal]);
+  }, [busy, startReveal, target]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -214,6 +265,13 @@ export default function Machine({ sharedResult }: MachineProps) {
     setMuted(next);
   }
 
+  function toggleTarget<K extends keyof BuildTarget>(key: K, value: NonNullable<BuildTarget[K]>) {
+    setTarget((current) => ({
+      ...current,
+      [key]: current[key] === value ? undefined : value,
+    }));
+  }
+
   async function copy() {
     try {
       await navigator.clipboard.writeText(phrase);
@@ -226,7 +284,7 @@ export default function Machine({ sharedResult }: MachineProps) {
 
   async function copyPrompt() {
     try {
-      await navigator.clipboard.writeText(buildDevinPrompt(active?.finalProduct ?? "", active?.finalAudience ?? ""));
+      await navigator.clipboard.writeText(buildDevinPrompt(active?.finalProduct ?? "", active?.finalAudience ?? "", target));
       setPromptCopied(true);
       window.setTimeout(() => setPromptCopied(false), 1600);
     } catch {
@@ -258,7 +316,10 @@ export default function Machine({ sharedResult }: MachineProps) {
   const loading = phase === "loading" || phase === "warming";
   const productMoving = phase === "spinningProduct";
   const audienceMoving = phase === "spinningAudience";
-  const devinUrl = landed && active ? `https://app.devin.ai/?prompt=${encodeURIComponent(buildDevinPrompt(active.finalProduct, active.finalAudience))}` : undefined;
+  const devinUrl =
+    landed && active
+      ? `https://app.devin.ai/?prompt=${encodeURIComponent(buildDevinPrompt(active.finalProduct, active.finalAudience, target))}`
+      : undefined;
   const errorMessage =
     errorKind === "rate"
       ? "The machine is catching its breath. Try again shortly."
@@ -310,6 +371,40 @@ export default function Machine({ sharedResult }: MachineProps) {
               <button className={styles.action} type="button" onClick={() => void copy()} disabled={!landed} tabIndex={landed ? 0 : -1}>{copied ? "Copied" : "Copy"}</button>
               <button className={styles.action} type="button" onClick={() => void copyPrompt()} disabled={!landed} tabIndex={landed ? 0 : -1} title="Copy a ready-to-paste prompt asking Devin to build this idea">{promptCopied ? "Prompt copied" : "Devin prompt"}</button>
               <button className={styles.action} type="button" onClick={() => void share()} disabled={!landed} tabIndex={landed ? 0 : -1}>Share</button>
+            </div>
+            <div className={styles.targets}>
+              <div className={styles.targetRow} role="group" aria-label="App type">
+                <span className={styles.targetLabel}>App</span>
+                {PLATFORMS.map((platform) => (
+                  <button
+                    className={`${styles.target} ${target.platform === platform ? styles.targetSelected : ""}`}
+                    key={platform}
+                    type="button"
+                    aria-pressed={target.platform === platform}
+                    onClick={() => toggleTarget("platform", platform)}
+                    disabled={busy}
+                    tabIndex={busy ? -1 : 0}
+                  >
+                    {PLATFORM_LABELS[platform]}
+                  </button>
+                ))}
+              </div>
+              <div className={styles.targetRow} role="group" aria-label="Devin machine">
+                <span className={styles.targetLabel}>Machine</span>
+                {MACHINES.map((machine) => (
+                  <button
+                    className={`${styles.target} ${target.machine === machine ? styles.targetSelected : ""}`}
+                    key={machine}
+                    type="button"
+                    aria-pressed={target.machine === machine}
+                    onClick={() => toggleTarget("machine", machine)}
+                    disabled={busy}
+                    tabIndex={busy ? -1 : 0}
+                  >
+                    {MACHINE_LABELS[machine]}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
           <p className={`${styles.hint} ${landed || busy || errorMessage ? styles.hintHidden : ""}`}>Space to pull</p>
