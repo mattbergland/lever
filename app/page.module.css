@@ -422,8 +422,10 @@
   }
 
   .credit {
-    right: 16px;
-    bottom: 56px;
+    position: static;
+    display: flex;
+    justify-content: center;
+    margin: 28px auto 16px;
   }
 }
 
