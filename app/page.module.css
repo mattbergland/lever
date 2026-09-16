@@ -260,22 +260,33 @@
   justify-content: center;
   gap: 6px;
   height: 56px;
+  width: min(100%, 390px);
 }
 
 .targetRow {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   flex-wrap: wrap;
   gap: 14px;
   min-height: 22px;
+  width: 100%;
 }
 
 .targetLabel {
+  box-sizing: border-box;
+  display: inline-block;
+  width: 60px;
+  min-width: 60px;
+  padding: 3px 6px;
+  border: 1px solid var(--line);
+  border-radius: 2px;
   color: var(--muted);
   font-family: var(--font-mono), monospace;
   font-size: 9px;
   letter-spacing: 0.12em;
+  line-height: 1;
+  text-align: center;
   text-transform: uppercase;
 }
 
