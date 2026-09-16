@@ -3,10 +3,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Reel from "./Reel";
+import ShareSheet from "./ShareSheet";
 import { audio } from "@/lib/audio/engine";
 import { buildReelSchedule, runReel, runWarmup, type ReelStep } from "@/lib/animation/reel";
 import type { SpinResult } from "@/lib/generation/schema";
-import { renderShareCard } from "@/lib/shareCard";
 import styles from "@/app/page.module.css";
 import {
   buildDevinPrompt,
@@ -101,7 +101,7 @@ export default function Machine({ sharedResult }: MachineProps) {
   const [errorKind, setErrorKind] = useState<ErrorKind>();
   const [copied, setCopied] = useState(false);
   const [promptCopied, setPromptCopied] = useState(false);
-  const [shared, setShared] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const [response, setResponse] = useState(false);
   const [muted, setMuted] = useState(false);
   const [target, setTarget] = useState<BuildTarget>({});
@@ -209,7 +209,7 @@ export default function Machine({ sharedResult }: MachineProps) {
   const spin = useCallback(async () => {
     if (busy) return;
     setCopied(false);
-    setShared(false);
+    setShareOpen(false);
     const history = readHistory();
     const next = heldSpin.current;
     heldSpin.current = undefined;
@@ -297,40 +297,7 @@ export default function Machine({ sharedResult }: MachineProps) {
   }
 
   async function share() {
-    const url = `${window.location.origin}/?p=${encodeURIComponent(active?.finalProduct ?? "")}&a=${encodeURIComponent(active?.finalAudience ?? "")}`;
-    const file = new File([await renderShareCard(active?.finalProduct ?? "", active?.finalAudience ?? "")], "pullthelever.png", { type: "image/png" });
-    const markShared = () => {
-      setShared(true);
-      window.setTimeout(() => setShared(false), 1600);
-    };
-    if (navigator.share && navigator.canShare?.({ files: [file] })) {
-      try {
-        await navigator.share({ title: "PULLTHELEVER.BUILD", text: phrase, url, files: [file] });
-        markShared();
-      } catch {
-        // User cancelled sharing.
-      }
-      return;
-    }
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: "PULLTHELEVER.BUILD", text: phrase, url });
-        markShared();
-      } catch {
-        // User cancelled sharing.
-      }
-      return;
-    }
-    const objectUrl = URL.createObjectURL(file);
-    const anchor = document.createElement("a");
-    anchor.href = objectUrl;
-    anchor.download = file.name;
-    document.body.appendChild(anchor);
-    anchor.click();
-    anchor.remove();
-    URL.revokeObjectURL(objectUrl);
-    await navigator.clipboard.writeText(url);
-    markShared();
+    setShareOpen(true);
   }
 
   const productItems = phase === "warming" ? [warmupText] : active?.products ?? ["_____"];
@@ -350,6 +317,10 @@ export default function Machine({ sharedResult }: MachineProps) {
     landed && active
       ? `https://app.devin.ai/?prompt=${encodeURIComponent(buildDevinPrompt(active.finalProduct, active.finalAudience, target))}`
       : undefined;
+  const shareUrl =
+    active && typeof window !== "undefined"
+      ? `${window.location.origin}/?p=${encodeURIComponent(active.finalProduct)}&a=${encodeURIComponent(active.finalAudience)}`
+      : "";
   const errorMessage =
     errorKind === "rate"
       ? "The machine is catching its breath. Try again shortly."
@@ -400,9 +371,7 @@ export default function Machine({ sharedResult }: MachineProps) {
             <div className={`${styles.actions} ${!landed ? styles.actionsHidden : ""}`} aria-hidden={!landed}>
               <button className={styles.action} type="button" onClick={() => void copy()} disabled={!landed} tabIndex={landed ? 0 : -1}>{copied ? "Copied" : "Copy"}</button>
               <button className={styles.action} type="button" onClick={() => void copyPrompt()} disabled={!landed} tabIndex={landed ? 0 : -1} title="Copy a ready-to-paste prompt asking Devin to build this idea">{promptCopied ? "Prompt copied" : "Devin prompt"}</button>
-              <button className={styles.action} type="button" onClick={() => void share()} disabled={!landed} tabIndex={landed ? 0 : -1} title="Share an image of this result">
-                {shared ? "Saved" : "Share"}
-              </button>
+              <button className={styles.action} type="button" onClick={() => void share()} disabled={!landed} tabIndex={landed ? 0 : -1} title="Share an image of this result">Share</button>
             </div>
             <div className={styles.targets}>
               <div className={styles.targetRow} role="group" aria-label="App type">
@@ -452,6 +421,7 @@ export default function Machine({ sharedResult }: MachineProps) {
           <Image src="/devin-lockup.png" alt="Devin" width={72} height={22} priority={false} />
         </a>
       </main>
+      {shareOpen && active && <ShareSheet product={active.finalProduct} audience={active.finalAudience} url={shareUrl} phrase={phrase} onClose={() => setShareOpen(false)} />}
     </div>
   );
 }
