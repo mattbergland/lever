@@ -181,6 +181,7 @@
   align-items: center;
   justify-content: center;
   gap: 16px;
+  height: 62px;
   width: 100%;
 }
 
@@ -212,8 +213,7 @@
 }
 
 .buildHidden {
-  visibility: hidden;
-  pointer-events: none;
+  display: none;
 }
 
 .primary {
@@ -371,6 +371,7 @@
   .primaryRow {
     flex-direction: column;
     gap: 12px;
+    height: 122px;
   }
 
   .primaryRow > * {
