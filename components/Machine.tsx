@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import Reel from "./Reel";
 import { audio } from "@/lib/audio/engine";
 import { buildReelSchedule, runReel, runWarmup, type ReelStep } from "@/lib/animation/reel";
@@ -409,6 +410,16 @@ export default function Machine({ sharedResult }: MachineProps) {
           </div>
           <p className={`${styles.hint} ${landed || busy || errorMessage ? styles.hintHidden : ""}`}>Space to pull</p>
         </section>
+        <a
+          className={styles.credit}
+          href="https://devin.ai"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Built with Devin"
+        >
+          <span>Built with</span>
+          <Image src="/devin-lockup.png" alt="Devin" width={72} height={22} priority={false} />
+        </a>
       </main>
     </div>
   );

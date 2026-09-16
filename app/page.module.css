@@ -339,6 +339,31 @@
   visibility: hidden;
 }
 
+.credit {
+  position: fixed;
+  right: 24px;
+  bottom: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-family: var(--font-mono), monospace;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-decoration: none;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+
+.credit:hover {
+  opacity: 1;
+}
+
+.credit img {
+  width: auto;
+  height: 22px;
+}
+
 @media (max-width: 600px) {
   .header {
     height: 60px;
@@ -394,6 +419,11 @@
 
   .targets {
     height: 76px;
+  }
+
+  .credit {
+    right: 16px;
+    bottom: 56px;
   }
 }
 
