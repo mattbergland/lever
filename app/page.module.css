@@ -167,6 +167,18 @@
   color: #d5cfc5;
 }
 
+.verdict {
+  width: min(100%, 1216px);
+  height: 1em;
+  margin: 10px auto 0;
+  color: #605d58;
+  font-family: var(--font-mono), monospace;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
 .controls {
   display: flex;
   flex-direction: column;

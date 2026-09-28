@@ -8,6 +8,13 @@ export const spinResultSchema = z.object({
   audiences: z.array(entrySchema).min(12).max(18),
   finalProduct: entrySchema,
   finalAudience: entrySchema,
+  verdict: z
+    .object({
+      buildable: z.number().min(0).max(1),
+      weird: z.number().min(0).max(1),
+      harm: z.number().min(0).max(1),
+    })
+    .optional(),
 });
 
 export type SpinResult = z.infer<typeof spinResultSchema>;
@@ -50,5 +57,6 @@ export function normalizeSpinResult(input: unknown): SpinResult {
     audiences,
     finalProduct: products[products.length - 1],
     finalAudience: audiences[audiences.length - 1],
+    verdict: parsed.verdict,
   };
 }

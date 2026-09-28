@@ -351,6 +351,11 @@ export default function Machine({ sharedResult }: MachineProps) {
             {loading && <span className={styles.loading}>consulting the void…</span>}
             {!loading && errorMessage && <span className={styles.error} role="alert">{errorMessage}</span>}
           </p>
+          {landed && active?.verdict && (
+            <p className={styles.verdict}>
+              Buildable {Math.round(active.verdict.buildable * 100)}% · Weird {Math.round(active.verdict.weird * 100)}% · judged by Jev
+            </p>
+          )}
           <div className={styles.controls}>
             <div className={styles.primaryRow}>
               <button className={styles.primary} type="button" onClick={() => void spin()} disabled={busy}>

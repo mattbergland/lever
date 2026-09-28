@@ -19,3 +19,7 @@ Each pull asks OpenAI to generate fresh product and audience reels on the
 server. A cryptographic seed and a randomly selected creative mode keep each
 spin unpredictable, while recent results are sent as local exclusions. There
 is no static word bank; the browser only animates and stores recent finals.
+Optionally, TypeSafe's Jev model then judges every product candidate against
+the final audience — scoring buildability and novelty and screening for harm —
+and picks the best final pair, shown as a small verdict badge (requires
+`TYPESAFE_API_KEY`; skipped gracefully when unset).

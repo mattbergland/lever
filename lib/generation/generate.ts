@@ -2,6 +2,7 @@ import OpenAI from "openai";
 import crypto from "node:crypto";
 import { buildGenerationPrompt } from "./prompt";
 import { normalizeSpinResult, type SpinResult } from "./schema";
+import { judgeSpin } from "./judge";
 import type { BuildTarget } from "@/lib/devinPrompt";
 
 export class RateLimitError extends Error {
@@ -54,7 +55,7 @@ export async function generateSpin(exclusions: string[] = [], target: BuildTarge
         ],
       });
       try {
-        return normalizeSpinResult(JSON.parse(responseText(response)));
+        return await judgeSpin(normalizeSpinResult(JSON.parse(responseText(response))));
       } catch (error) {
         lastError = error;
         if (attempt === 0) continue;
